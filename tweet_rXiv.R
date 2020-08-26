@@ -1,10 +1,7 @@
 library(rtweet)
 library(tidyverse)
 library(tidytext)
-#library(ggplot2)
-#library(magick)
 library(glue)
-#library(webshot) 
 library(tibble)
 get_token()
 #
@@ -38,8 +35,6 @@ tweet_rate_limit <- subset(rate_limit_pull,
 tweet_rate_limit_counter <- tweet_rate_limit -
   subset(rate_limit_pull,query=="statuses/user_timeline")[["remaining"]]
 tweet_rate_limit <- tweet_rate_limit - 100
-### print(glue("The initial tweet_rate_limit is {tweet_rate_limit}"))
-### print(glue("The initial tweet_rate_limit_counter is {tweet_rate_limit_counter}"))
 #
 #
 timeline_fudge <- 16
@@ -98,11 +93,6 @@ Sort_Tweets <- function(given_tweets) {
 # this function increments a pull counter each time it's run, and if
 # the counter gets to the max, it pauses for 15 minutes.
 Check_Rate_Limit <- function(){
-###  print(glue("tweet_rate_limit_counter is {tweet_rate_limit_counter}"))
-#  if (tweet_rate_limit_counter %% 10 == 0) {
-#    remaining <- subset(rate_limit(),query=="statuses/user_timeline")[["remaining"]]
-#    print(glue("remaining is {remaining}"))
-#  }
   if (tweet_rate_limit_counter > tweet_rate_limit){
     print("Rate limit met. Execution paused for 16 minutes.")
     Sys.sleep(1000)
@@ -115,24 +105,16 @@ Check_Rate_Limit <- function(){
 # Check_Rate_Limit() to pause the tweet pulls in the case that the rate
 # limit has been met (or rather, nearly met).
 Pull_Timeline <- function(given_user_name, given_max_id=NULL, given_number) {
-###  print("=========================================")
   to_return <- blank_tweet
   tweet_rate_limit_counter <<- tweet_rate_limit_counter + 1
   if (given_number > 1) {
     tweet_rate_limit_counter <<- tweet_rate_limit_counter + timeline_fudge
   }
   Check_Rate_Limit()
-###    remaining1 <- subset(rate_limit(),query=="statuses/user_timeline")[["remaining"]]
-###    print(glue("remaining1 is {remaining1}"))
   to_return <- get_timeline(user=given_user_name, 
                             max_id=given_max_id, 
                             n=given_number, 
                             check=FALSE)
-###    remaining2 <- subset(rate_limit(),query=="statuses/user_timeline")[["remaining"]]
-###    print(glue("remaining2 is {remaining2}"))
-###    n_tweets_div  <- as.integer(nrow(to_return)/200) +1
-###    print(glue("Change in remaining: {remaining1-remaining2}"))
-###    print(glue("Number of tweets pulled divided by 200: {n_tweets_div}"))
   return(to_return)
 }
 #
@@ -156,16 +138,12 @@ for (k in 1:nrow(tweeple)){
   valid_pull      <- FALSE
   if (is.na(tweeple$latest_tweet_id[k])) {
     pulled_tweets <- blank_tweet
-#    pulled_tweets <- get_timeline(user=user_name, n=num_of_initial_tweets)
     pulled_tweets <- Pull_Timeline(user_name, NULL, num_of_initial_tweets)
-###    print(unique(pulled_tweets$screen_name))
-###    print(nrow(pulled_tweets))
     if (nrow(pulled_tweets) > 0 ) {
       valid_pull <- TRUE
     }
   } else {
     for (i in 1:max_pulls) {
-###      print(glue("i is {i}"))
       temp <- blank_tweet
       temp <- Pull_Timeline(user_name, pulled_max_id, num_tweet_base*2^i)
       if (nrow(temp) > 0) {
@@ -205,18 +183,6 @@ all_pulled_tweets$has_upthread     <- replicate(nrow(all_pulled_tweets),FALSE)
 all_pulled_tweets$media_downloaded <- FALSE
 tweet_stack <- Sort_Tweets(subset(all_pulled_tweets, in_conversation))
 #
-#
-#
-###    remaining <- subset(rate_limit(),query=="statuses/user_timeline")[["remaining"]]
-###    print(glue("remaining is {remaining}"))
-###
-###for(this_name in screen_names) {
-###  print(this_name)
-###  print(nrow(subset(all_pulled_tweets,screen_name== this_name)))
-###}
-###
-###screen_names <- unique(all_pulled_tweets$screen_name)
-###colnames(tweet_stack)
 #
 #
 # Here we combine old_tweets with those pulled tweets which are 
