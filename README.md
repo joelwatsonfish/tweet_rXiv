@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The purpose of this code is to archive the tweets and/or conversations of a short list of users.  It makes use of the rtweet package, and requires creating a Twitter app and establishing authorization.  This is not as bad as it sounds, and the steps to achieve this can be found [here.](https://cran.r-project.org/web/packages/rtweet/vignettes/auth.html)  The rtweet package has some nice basic tools, so if you are not familiar with them you should check out the following brief [introduction.](https://cran.r-project.org/web/packages/rtweet/vignettes/intro.html)
+The purpose of this code is to archive the tweets and/or threaded conversations of a short list of users.  It makes use of the `rtweet` package, and requires creating a Twitter app and establishing authorization.  This is not as bad as it sounds, and the steps to achieve this can be found [here.](https://cran.r-project.org/web/packages/rtweet/vignettes/auth.html)  The `rtweet` package has some nice basic tools, so if you are not familiar with them you should check out the following brief [introduction.](https://cran.r-project.org/web/packages/rtweet/vignettes/intro.html)
 
 
 ## Use of tweet_rXiv
@@ -17,9 +17,9 @@ Each time `tweet_rXiv.R` is run, it will read in the `tweeple.csv` file as a dat
 "@JoeBiden",TRUE,NA
 ```
 
-which indicates that we want to archive Donald Trump's and Joe Biden's tweets, but we also want to archive Joe Biden's conversations. (More on that momentarily.)  The latest_tweet_id column is mostly used for internal purposes as a means to keep track of what the most recently archived tweet (status_id) is for that user.  An entry of NA specifies that there is no record of a most recently archived tweet for that user.  Note that if you want to archive more user's tweets, they need to be specified in this file using the above convention.  Remember: no spaces!
+which indicates that we want to archive Donald Trump's and Joe Biden's tweets, but we also want to archive Joe Biden's threaded conversations. (More on that momentarily.)  The `latest_tweet_id` column is mostly used for internal purposes as a means to keep track of what the most recently archived tweet (`status_id`) is for that user.  An entry of `NA` specifies that there is no record of a most recently archived tweet for that user.  Note that if you want to archive the tweets of more users, then those users need to be specified in this file using the above convention.  Remember: no spaces!
 
-After loading the `tweeple.csv` file, `tweet_rXiv` will then open previously downloaded tweets stored in `tweet_rXiv.rds` if the file exists, and then it will download the tweets of the listed users.  If `latest_tweet_id` is `NA` then the number of initial tweets to be downloaded for that user is specified by the following line of code: 
+After loading the `tweeple.csv` file, `tweet_rXiv.R` will then open previously downloaded tweets stored in `tweet_rXiv.rds` if the file exists, and then it will download the tweets of the listed users.  If `latest_tweet_id` is `NA` then the number of initial tweets to be downloaded for that user is specified by the following line of code: 
 
 ```
 num_of_initial_tweets    <- 40
@@ -29,7 +29,7 @@ You can increase this number up to 3200, which is maximum number the `rtweet` pa
 
 Thus in the sample case, `tweet_rXiv` will download @realDonaldTrump's and @JoeBiden's 40 most recent tweets, but then it attempts to acquire the conversations @JoeBiden is in.  That is, if one of @JoeBiden's tweets is a reply to somone else's tweet, `tweet_rXiv` will download that tweet as well, and if that tweet is a reply to someone else's tweet then `tweet_rXiv` will download that tweet too, etc.  The algorithm stops downloading tweets once the top of the thread is found, or when it tries to download a deleted or protected tweet, or the tweet of someone who has blocked you.  
 
-A word of warning about downloading lots of threads: This can take a while.  Either Twitter or the rtweet package throttles the number of `get_timeline()` calls to 900 per 15 minutes (i.e. about 1 per second).  Each new tweet in a conversation thread is downloaded one at a time (rather than in bulk) so building many conversation threads will hit the rate limit set by Twitter.  Thus there is a counter in the code which keeps track of this, and pauses the process until the rate limit is reset.  Thus you may see the following warning appear:
+A word of warning about downloading lots of threads: This can take a while.  Either Twitter or the `rtweet` package throttles the number of `get_timeline()` calls to 900 per 15 minutes (i.e. about 1 per second).  Each new tweet in a conversation thread is downloaded one at a time (rather than in bulk) so building many conversation threads will hit the rate limit set by Twitter.  Thus there is a counter in the code which keeps track of this, and pauses the process until the rate limit is reset.  Thus you may see the following warning appear:
 
 ```
 Rate limit met. Execution paused for 16 minutes.
@@ -45,13 +45,17 @@ download_images <- FALSE
 
 When `FALSE`, it will not, when `TRUE` it will cycle through all tweets (including all older ones) and download the linked images.  This is the one point where it (presumably) matters that you are on a Mac or Linux based machine.  Specifically because the images are downloaded to the directory 
 
+```
 ./media/
+```
 
 in the following line:
 
+```
 pathname <- glue("./media/{download_filename}")
+```
 
-I haven't tested this on a Windows machine yet, so presumably the syntax may need to be changed in that case.  The last thing `tweet_rXiv` twill do is save updates made to the `tweeple.csv` file (like the ID of the most recently downloaded tweet) and save the newly acquired tweets with all the previously saved tweets to the `tweet_rXiv.rds` file.
+I haven't tested this on a Windows machine yet, so presumably the syntax may need to be changed in that case.  The last thing `tweet_rXiv` will do is save updates made to the `tweeple.csv` file (like the ID of the most recently downloaded tweet) and save the newly acquired tweets with all the previously saved tweets to the `tweet_rXiv.rds` file.
 
 To search through your archived tweets, first read them in:
 
@@ -73,7 +77,8 @@ screen_name    # Screen name of owner of a tweet (like realDonaldTrump or JoeBid
 text           # Body text of the tweet
 ```
 
-It's also worth noting that the status_id completely determines the url for the tweet.  For example, 332308211321425920 is the status_id of Trump's claim about his IQ, and a link to the tweet can be constructed as follows:
+It's also worth noting that the `status_id` completely determines the url for the tweet.  For example, 332308211321425920 is the `status_id` of Trump's claim about his IQ, and a link to the tweet can be constructed as follows:
+
 
 ```
 https://twitter.com/AnyName/status/332308211321425920/
@@ -108,7 +113,7 @@ print(search_result_tweets$text)
 and to do a case sensitive search for "Critical" or "Theory" use
 
 ```{r}
-search_result_tweets <- Search_Tweets(archived_tweets,"(Critical)|(Studies)")
+search_result_tweets <- Search_Tweets(archived_tweets, "(Critical)|(Studies)", case_sensitive=TRUE)
 print(search_result_tweets$text)
 ```
 
@@ -120,7 +125,7 @@ If you want archive the tweets of someone, add the following line to the `tweepl
 "@realDonaldTrump",FALSE,NA
 ```
 
-If you want to archive all the up-threads of someone, add the following line to the tweeple.csv file:
+If you want to archive all the up-threads of someone, add the following line to the `tweeple.csv` file:
 
 ```
 "@JoeBiden",TRUE,NA
@@ -130,7 +135,7 @@ If you want to download all the images of the tweets you archive, modify the `tw
 download_images          <- TRUE
 ```
 
-If you want to get the maximum number of tweets from a newly listed user in the `tweeple.csv` file, modigy the `tweet_rXiv.R` line to the following:
+If you want to get the maximum number of tweets from a newly listed user in the `tweeple.csv` file, modify the `tweet_rXiv.R` line to the following:
 
 ```
 num_of_initial_tweets    <- 3200
@@ -142,7 +147,7 @@ Creating many upthreads may take quite a while.  If you are on a Windows machine
 pathname <- glue("./media/{download_filename}")
 ```
 
-The tweet_rXiv.R script should be run regularly to collect archive tweets.  The following code block is used to read in previously archived tweets.
+The `tweet_rXiv.R` script should be run regularly to collect archive tweets.  The following code block is used to read in previously archived tweets.
 
 ```{r}
 library(rtweet)
